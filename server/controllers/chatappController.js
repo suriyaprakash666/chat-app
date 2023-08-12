@@ -2,8 +2,27 @@ const mongoose = require("mongoose");
 const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const MessageModel = require("../models/messageModel");
 
 const bcryptSalt = bcrypt.genSaltSync(10);
+
+async function getUserDataFromReq(req) {
+  return new Promise((resolve, reject) => {
+    const token = req.cookies?.token;
+    if (token) {
+      jwt.verify(token, process.env.JWT_SECRET, {}, (err, userData) => {
+        if (err) throw err;
+        resolve(userData);
+      });
+    } else {
+      reject("no token");
+    }
+  });
+}
+
+const test = (req, res) => {
+  res.send("Hello World");
+};
 
 const register = async (req, res) => {
   const { username, password } = req.body;
@@ -53,7 +72,24 @@ const login = async (req, res) => {
   }
 };
 
-const profile = (req, res) => {
+const getMessages = async (req, res) => {
+  const { userId } = req.params;
+  const userData = await getUserDataFromReq(req);
+  const ourUserId = userData.userId;
+  console.log({ userId, ourUserId });
+  const messages = await MessageModel.find({
+    sender: { $in: [userId, ourUserId] },
+    recipient: { $in: [userId, ourUserId] },
+  }).sort({ createdAt: 1 });
+  res.json(messages);
+};
+
+const getPeople = async (req, res) => {
+  const users = await User.find({}, { _id: 1, username: 1 });
+  res.json(users);
+};
+
+const getProfile = (req, res) => {
   const token = req.cookies?.token;
   if (token) {
     jwt.verify(token, process.env.JWT_SECRET, {}, (err, userData) => {
@@ -68,5 +104,8 @@ const profile = (req, res) => {
 module.exports = {
   register,
   login,
-  profile,
+  getProfile,
+  getMessages,
+  getPeople,
+  test,
 };
