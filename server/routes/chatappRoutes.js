@@ -2,6 +2,7 @@ const express = require("express");
 const {
   register,
   login,
+  logout,
   getProfile,
   getMessages,
   test,
@@ -15,5 +16,6 @@ router.get("/messages/:userId", getMessages);
 router.get("/people", getPeople);
 router.post("/register", register);
 router.post("/login", login);
+router.post("/logout", logout);
 
 module.exports = router;

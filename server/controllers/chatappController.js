@@ -72,6 +72,10 @@ const login = async (req, res) => {
   }
 };
 
+const logout = (req, res) => {
+  res.cookie("token", "").status(201).json("Ok");
+};
+
 const getMessages = async (req, res) => {
   const { userId } = req.params;
   const userData = await getUserDataFromReq(req);
@@ -104,6 +108,7 @@ const getProfile = (req, res) => {
 module.exports = {
   register,
   login,
+  logout,
   getProfile,
   getMessages,
   getPeople,
