@@ -7,17 +7,15 @@ import axios from "axios";
 import Contact from "./Contact";
 
 const Chat = () => {
-  // eslint-disable-next-line no-unused-vars
   const [ws, setWs] = useState(null);
   const [onlinePeople, setOnlinePeople] = useState({});
+  const [offlinePeople, setOfflinePeople] = useState({});
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [newMessage, setNewMessage] = useState(null);
   const [messages, setMessages] = useState([]);
-  // eslint-disable-next-line no-unused-vars
-  const [offlinePeople, setOfflinePeople] = useState({});
 
-  // eslint-disable-next-line no-unused-vars
   const { username, id, setId, setUsername } = useContext(UserContext);
+
   const divUnderMessages = useRef();
 
   useEffect(() => {
@@ -30,7 +28,6 @@ const Chat = () => {
     ws.addEventListener("message", handleMessage);
     ws.addEventListener("close", () => {
       setTimeout(() => {
-        console.log("Disconnected. Trying to reconnect...");
         connectToWS();
       }, 1000);
     });
@@ -49,7 +46,9 @@ const Chat = () => {
     if ("online" in messageData) {
       showOnlinePeople(messageData.online);
     } else if ("text" in messageData) {
-      setMessages((prev) => [...prev, { ...messageData }]);
+      if (messageData.sender === selectedUserId) {
+        setMessages((prev) => [...prev, { ...messageData }]);
+      }
     }
   };
 
@@ -61,25 +60,44 @@ const Chat = () => {
     });
   };
 
-  const sendMessage = (e) => {
-    e.preventDefault();
+  const sendMessage = (e, file = null) => {
+    if (e) e.preventDefault();
     ws.send(
       JSON.stringify({
         recipient: selectedUserId,
         text: newMessage,
+        file,
       })
     );
-    setNewMessage("");
-    setMessages((prev) => [
-      ...prev,
-      {
-        text: newMessage,
-        sender: id,
-        recipient: selectedUserId,
-        _id: Date.now(),
-      },
-    ]);
+
+    if (file) {
+      axios.get("/messages/" + selectedUserId).then((res) => {
+        setMessages(res.data);
+      });
+    } else {
+      setNewMessage("");
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: newMessage,
+          sender: id,
+          recipient: selectedUserId,
+          _id: Date.now(),
+        },
+      ]);
+    }
   };
+
+  function sendFile(e) {
+    const reader = new FileReader();
+    reader.readAsDataURL(e.target.files[0]);
+    reader.onload = () => {
+      sendMessage(null, {
+        name: e.target.files[0].name,
+        data: reader.result,
+      });
+    };
+  }
 
   useEffect(() => {
     const div = divUnderMessages.current;
@@ -194,6 +212,29 @@ const Chat = () => {
                       }
                     >
                       {message.text}
+                      {message.file && (
+                        <div>
+                          <a
+                            target=""
+                            className="flex items-center gap-1 border-b"
+                            href={
+                              axios.defaults.baseURL +
+                              "/uploads/" +
+                              message.file
+                            }
+                          >
+                            <svg
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                              xmlns="http://www.w3.org/2000/svg"
+                              aria-hidden="true"
+                            >
+                              <path d="M3 3.5A1.5 1.5 0 014.5 2h6.879a1.5 1.5 0 011.06.44l4.122 4.12A1.5 1.5 0 0117 7.622V16.5a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 013 16.5v-13z" />
+                            </svg>
+                            {message.file}
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -211,7 +252,11 @@ const Chat = () => {
               placeholder="Type your message here"
               className="bg-white flex-grow rounded-sm order p-2"
             />
-            <button type="button" className="bg-gray-200 p-2 rounded-sm">
+            <label
+              type="button"
+              className="bg-gray-200 p-2 cursor-pointer rounded-sm border"
+            >
+              <input type="file" className="hidden" onChange={sendFile} />
               <svg
                 fill="none"
                 stroke="currentColor"
@@ -226,7 +271,7 @@ const Chat = () => {
                   d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"
                 />
               </svg>
-            </button>
+            </label>
             <button
               type="submit"
               className="bg-blue-700 p-2 rounded-sm text-white"

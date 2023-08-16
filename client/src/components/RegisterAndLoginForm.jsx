@@ -1,11 +1,12 @@
 import { useContext, useState } from "react";
 import axios from "axios";
 import { UserContext } from "./UserContext";
+import Logo from "./Logo";
 
 const RegisterAndLoginForm = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoginOrRegister, setIsLoginOrRegister] = useState("register");
+  const [isLoginOrRegister, setIsLoginOrRegister] = useState("login");
 
   const { setUsername: setUserLoggedIn, setId } = useContext(UserContext);
 
@@ -18,20 +19,23 @@ const RegisterAndLoginForm = () => {
   }
 
   return (
-    <div className="bg-blue-50 h-screen flex items-center">
-      <form className="w-64 mx-auto mb-12" onSubmit={submitHandler}>
+    <div className="bg-blue-50 h-screen flex flex-col items-center justify-center">
+      <div className="text-center text-2xl pr-2 mb-4">
+        <Logo />
+      </div>
+      <form className="w-64 mx-auto" onSubmit={submitHandler}>
         <input
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           type="text"
-          placeholder="username"
+          placeholder="Username"
           className="block w-full border rounded-sm p-2 mb-2"
         />
         <input
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           type="password"
-          placeholder="password"
+          placeholder="Password"
           className="block w-full border rounded-sm p-2 mb-2"
         />
         <button className="bg-blue-500 w-full rounded-sm border p-2 text-white">
@@ -41,7 +45,10 @@ const RegisterAndLoginForm = () => {
           {isLoginOrRegister === "register" && (
             <div>
               Already a User?
-              <button onClick={() => setIsLoginOrRegister("login")}>
+              <button
+                className="ml-1 text-blue-500"
+                onClick={() => setIsLoginOrRegister("login")}
+              >
                 Login
               </button>
             </div>
@@ -49,7 +56,10 @@ const RegisterAndLoginForm = () => {
           {isLoginOrRegister === "login" && (
             <div>
               Do not have an account?
-              <button onClick={() => setIsLoginOrRegister("register")}>
+              <button
+                className="ml-1 text-blue-500"
+                onClick={() => setIsLoginOrRegister("register")}
+              >
                 Register
               </button>
             </div>
